@@ -1,0 +1,17 @@
+{
+    "name": "SparrowsBot-Workspace",
+    "context": "..",
+    "dockerFile": "./Dockerfile",
+    "remoteUser": "dev",
+    "mounts": ["source=/dev/bus/usb,target=/dev/bus/usb,type=bind", "source=/tmp/.X11-unix,target=/tmp/.X11-unix,type=bind"],
+    "settings": {
+      "terminal.integrated.shell.linux": null
+    },
+    "runArgs": ["--privileged", "--ipc=host","-e DISPLAY=$DISPLAY"],
+    "extensions": [
+		"ms-dotnettools.csharp",
+		"ms-dotnettools.csdevkit"
+	],
+    "workspaceMount": "source=${localWorkspaceFolder},target=/home/dev/SparrowsBot,type=bind,consistency=delegated",
+    "workspaceFolder": "/home/dev/SparrowsBot"
+  }
