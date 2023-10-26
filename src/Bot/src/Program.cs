@@ -28,21 +28,25 @@ namespace Sparrows.Bot {
                 client.Ready += OnReady;
                 m_InteractionService.Log += OnLog;
 
+                await commandHandler.InitializeAsync();
+
                 await client.LoginAsync(TokenType.Bot, m_Config["token"]);
                 await client.StartAsync();
-
-                await commandHandler.InitializeAsync();
 
                 await Task.Delay(Timeout.Infinite);
             }
         }
 
         private Task OnLog(LogMessage msg) {
-            Console.WriteLine(msg.ToString());
+            Console.WriteLine("[ Discord ] " + msg.ToString());
             return Task.CompletedTask;
         }
 
         private async Task OnReady() {
+            if(m_InteractionService == null) {
+                throw new Exception("Interactions Service needs to be initilized");
+            }
+
             #if DEBUG
                 await m_InteractionService.RegisterCommandsToGuildAsync(ulong.Parse(m_Config["test_guild_id"]));
             #else
@@ -56,11 +60,11 @@ namespace Sparrows.Bot {
             .AddSingleton<DiscordSocketClient>()
             .AddSingleton<InteractionService>()
             .AddSingleton<CommandHandlerService>()
+            .AddSingleton<IUserService, MemStoreUserService>()
             .BuildServiceProvider();
         }
 
-
         private readonly IConfiguration m_Config;
-        private InteractionService m_InteractionService;
+        private InteractionService? m_InteractionService;
     }
 }

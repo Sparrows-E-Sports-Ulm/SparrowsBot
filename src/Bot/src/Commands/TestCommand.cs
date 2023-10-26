@@ -6,8 +6,8 @@ namespace Sparrows.Bot.Commands {
         public TestCommands () {}
 
         [SlashCommand("test", "Test the bot")]
-        public async Task Test(string arg1, string arg2) {
-            await RespondAsync($"Arg 1 = {arg1} and Arg2= {arg2}");
+        public async Task Test(string arg1, string arg2, string arg3) {
+            await RespondAsync($"Arg 1 = {arg1} and Arg2= {arg2} arg3={arg3}");
         }
 
         [SlashCommand("8ball", "find your answer!")]
