@@ -4,6 +4,7 @@ namespace Sparrows.Bot.Services {
     public class MemStoreOrderService : IOrderService {
         public MemStoreOrderService() {
             m_Orders = new Dictionary<ulong, List<Order>>();
+            m_IsOrderingLocked = true;
         }
 
         public void AddOrder(User user, Order order) {
@@ -46,6 +47,20 @@ namespace Sparrows.Bot.Services {
             return m_Orders;
         }
 
+        public bool IsOrderingLocked() {
+            return m_IsOrderingLocked;
+        }
+
+        public void LockOrdering() {
+            m_IsOrderingLocked = true;
+        }
+
+        public void UnlockOrdering() {
+            m_IsOrderingLocked = false;
+        }
+
         private Dictionary<ulong, List<Order>> m_Orders;
+
+        private bool m_IsOrderingLocked;
     }
 }

@@ -16,6 +16,10 @@ namespace Sparrows.Bot.Services {
 
         public Dictionary<ulong, List<Order>> GetAllOrders();
 
+        public bool IsOrderingLocked();
+        public void LockOrdering();
+        public void UnlockOrdering();
+
     }
 }
 

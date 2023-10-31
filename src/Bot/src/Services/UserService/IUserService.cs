@@ -10,39 +10,39 @@ namespace Sparrows.Bot.Services {
         /// </summary>
         /// <param name="id">Discord User ID</param>
         /// <returns>Matching User</returns>
-        User Get(ulong id);
+        Task<User> Get(ulong id);
 
         /// <summary>
         /// Adds a new User to the service
         /// </summary>
         /// <param name="user">The user to add</param>
-        void Add(User user);
+        Task Add(User user);
 
         /// <summary>
         /// Deletes a user from the service with the matiching discord id 
         /// </summary>
         /// <param name="id">The discord id of the user to be deleted</param>
-        void Delete(ulong id);
+        Task Delete(ulong id);
 
         /// <summary>
         /// Deletes a user from the service
         /// </summary>
         /// <param name="user">The user to delete</param>
-        void Delete(User user);
+        Task Delete(User user);
 
         /// <summary>
         /// Check if a certain user exists in the service
         /// </summary>
         /// <param name="user">User to check</param>
         /// <returns>True if user exists in the serivce</returns>
-        bool Exists(User user);
+        Task<bool> Exists(User user);
 
         /// <summary>
         /// Check if a certain user exists in the service by their Discord ID
         /// </summary>
         /// <param name="id">Discord ID of the user</param>
         /// <returns>True if the user exists in the service</returns>
-        bool Exists(ulong id);
+        Task<bool> Exists(ulong id);
     }
 }
 

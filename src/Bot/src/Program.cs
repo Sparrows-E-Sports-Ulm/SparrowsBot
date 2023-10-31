@@ -3,6 +3,7 @@ using Discord.Interactions;
 using Discord.WebSocket;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using MongoDB.Driver;
 using Sparrows.Bot.Services;
 
 namespace Sparrows.Bot {
@@ -13,12 +14,13 @@ namespace Sparrows.Bot {
             .AddJsonFile("appsettings.json", optional: false)
             .AddJsonFile("appsettings.dev.json", optional: true)
             .Build();
+
+            m_DbClient = new MongoClient("mongodb://localhost:27017");
         }
 
         public static Task Main(string[] args) => new Program().MainAsync();
 
         public async Task MainAsync() {
-           
             using(var services = ConfigureServices()) {
                 m_Client = services.GetRequiredService<DiscordSocketClient>();
                 var commandHandler = services.GetRequiredService<CommandHandlerService>();
@@ -59,8 +61,7 @@ namespace Sparrows.Bot {
             #endif
 
             ulong logChannelId = ulong.Parse(m_Config.GetRequiredSection("log_channel").Value);
-            m_LogChannel = m_Client.GetChannel(logChannelId) as IMessageChannel;
-            
+            m_LogChannel = m_Client.GetChannel(logChannelId) as IMessageChannel;   
         }
 
         private ServiceProvider ConfigureServices() {
@@ -68,8 +69,9 @@ namespace Sparrows.Bot {
             .AddSingleton(m_Config)
             .AddSingleton<DiscordSocketClient>()
             .AddSingleton<InteractionService>()
+            .AddSingleton(m_DbClient)
             .AddSingleton<CommandHandlerService>()
-            .AddSingleton<IUserService, MemStoreUserService>()
+            .AddSingleton<IUserService, DBUserService>()
             .AddSingleton<IOrderService, MemStoreOrderService>()
             .BuildServiceProvider();
         }
@@ -78,6 +80,7 @@ namespace Sparrows.Bot {
         private InteractionService? m_InteractionService;
         private DiscordSocketClient? m_Client;
         private IMessageChannel? m_LogChannel;
+        private MongoClient m_DbClient;
         
     }
 }

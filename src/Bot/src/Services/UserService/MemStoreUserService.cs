@@ -9,28 +9,31 @@ namespace Sparrows.Bot.Services {
             m_Users.Add(269452193826865153, new User {DiscordId = 269452193826865153, DiscordName="Lars", FirstName="Lars", LastName="Pfrenger", PayPal="lars@pp.com"});
         }
 
-        public void Add(User user) {
+        public Task Add(User user) {
             m_Users.Add(user.DiscordId, user);
+            return Task.CompletedTask;
         }
 
-        public void Delete(ulong id) {
+        public Task Delete(ulong id) {
             m_Users.Remove(id);
+            return Task.CompletedTask;
         }
 
-        public void Delete(User user) {
+        public Task Delete(User user) {
             Delete(user.DiscordId);
+            return Task.CompletedTask;
         }
 
-        public User Get(ulong id) {
-            return m_Users[id];
+        public Task<User> Get(ulong id) {
+            return Task.FromResult(m_Users[id]);
         }
 
-        public bool Exists(User user) {
+        public Task<bool> Exists(User user) {
             return Exists(user.DiscordId);
         }
 
-        public bool Exists(ulong id) {
-            return m_Users.ContainsKey(id);
+        public Task<bool> Exists(ulong id) {
+            return Task.FromResult(m_Users.ContainsKey(id));
         }
 
         private Dictionary<ulong, User> m_Users;

@@ -12,17 +12,12 @@ namespace Sparrows.Bot.Commands {
         public OrderCommand(IOrderService orderService, IUserService userService, IConfiguration config) {
             m_OrderService = orderService;
             m_UserService = userService;
-            m_IsOrderingUnlocked = false;
             m_AdminUsers = new List<ulong>();
 
             var adminUsers = config.GetRequiredSection("admin_users").GetChildren().ToArray();
             foreach(var user in adminUsers) {
                 m_AdminUsers.Add(ulong.Parse(user.Value));
             }
-
-            #if DEBUG
-                m_IsOrderingUnlocked = true;
-            #endif
         }
 
         [SlashCommand("food_now", "Opens up the orders", true)]
@@ -32,7 +27,7 @@ namespace Sparrows.Bot.Commands {
                 return;
             }
 
-            m_IsOrderingUnlocked = true;
+            m_OrderService.UnlockOrdering();
 
             if(!url.StartsWith("http")) {
                 url = "https://" + url;
@@ -59,7 +54,9 @@ namespace Sparrows.Bot.Commands {
                 return;
             }
 
-            m_IsOrderingUnlocked = false;
+            await RespondAsync("Processing Orders... You will receive a DM shortly.");
+
+            m_OrderService.LockOrdering();
 
             var orders = m_OrderService.GetAllOrders();
             
@@ -69,7 +66,7 @@ namespace Sparrows.Bot.Commands {
             writer.WriteLine("Discord User;Vorname;Nachname;Anzahl;Nummer;Gericht;PayPal");
 
             foreach(var userid in orders.Keys) {
-                User user = m_UserService.Get(userid);
+                User user = await m_UserService.Get(userid);
                 var basket = orders[userid];
 
                 foreach(var order in basket) {
@@ -84,16 +81,18 @@ namespace Sparrows.Bot.Commands {
             await Context.User.CreateDMChannelAsync();
             await Context.User.SendFileAsync(attachment);
 
-            await RespondAsync($"Orders are now closed - Check your DMs {Context.User.Mention}");
+            await FollowupAsync($"Orders are now closed - Check your DMs {Context.User.Mention}");
         }
 
         [SlashCommand("add", "Add a dish to your order")]
         public async Task Add(int amount, string dish_number, string dish_name) {
-            if(!m_IsOrderingUnlocked) {
+            if(m_OrderService.IsOrderingLocked()) {
                 await RespondAsync("Hi, we are currently not ordering any food. Please wait until the next announcement to order food.");
+                return;
             }
 
-            if(!m_UserService.Exists(Context.User.Id)) {
+            bool isUserRegistered = await m_UserService.Exists(Context.User.Id);
+            if(!isUserRegistered) {
                 await RespondAsync("Please register using /register first before ordering food");
                 return; 
             }
@@ -110,8 +109,9 @@ namespace Sparrows.Bot.Commands {
 
         [SlashCommand("remove", "Remove a dish from your order")]
         public async Task Remove(int number) {
-            if(!m_IsOrderingUnlocked) {
+            if(m_OrderService.IsOrderingLocked()) {
                 await RespondAsync("Hi, we are currently not ordering any food. Please wait until the next announcement to order food.");
+                return;
             }
 
             int index = number - 1;
@@ -131,8 +131,9 @@ namespace Sparrows.Bot.Commands {
 
         [SlashCommand("list", "List your current orders")]
         public async Task List() {
-            if(!m_IsOrderingUnlocked) {
+            if(m_OrderService.IsOrderingLocked()) {
                 await RespondAsync("Hi, we are currently not ordering any food. Please wait until the next announcement to order food.");
+                return;
             }
             
             var orders = m_OrderService.GetOrders(Context.User.Id);
@@ -153,12 +154,14 @@ namespace Sparrows.Bot.Commands {
                 Description=desc
             };
 
+            embed.WithCurrentTimestamp();
+            embed.WithAuthor(Context.User);
+
             await RespondAsync(embed: embed.Build());
         }
 
         private IOrderService m_OrderService;
         private IUserService m_UserService;
-        private bool m_IsOrderingUnlocked;
         private List<ulong> m_AdminUsers;
     }
 }

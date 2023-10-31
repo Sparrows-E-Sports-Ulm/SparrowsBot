@@ -9,12 +9,14 @@ namespace Sparrows.Bot.Commands {
         
         [SlashCommand("register", "Register necessary data about your self")]
         public async Task Register(string firstName, string lastName, string paypalEmail) {
-            if(m_UserService.Exists(Context.User.Id)) {
+            bool isUserRegistered = await m_UserService.Exists(Context.User.Id);
+            
+            if(isUserRegistered) {
                 await RespondAsync("You are already registered!");
                 return;
             }
 
-            m_UserService.Add(new Models.User {
+            await m_UserService.Add(new Models.User {
                 FirstName = firstName,
                 LastName = lastName,
                 DiscordName = Context.User.GlobalName,
