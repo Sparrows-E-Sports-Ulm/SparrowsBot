@@ -4,6 +4,9 @@ namespace Sparrows.Bot.Services {
     public class MemStoreUserService : IUserService {
         public MemStoreUserService() {
             m_Users = new Dictionary<ulong, User>();
+
+            // Add data for testing 
+            m_Users.Add(269452193826865153, new User {DiscordId = 269452193826865153, DiscordName="Lars", FirstName="Lars", LastName="Pfrenger", PayPal="lars@pp.com"});
         }
 
         public void Add(User user) {

@@ -20,18 +20,18 @@ namespace Sparrows.Bot {
         public async Task MainAsync() {
            
             using(var services = ConfigureServices()) {
-                var client = services.GetRequiredService<DiscordSocketClient>();
+                m_Client = services.GetRequiredService<DiscordSocketClient>();
                 var commandHandler = services.GetRequiredService<CommandHandlerService>();
                 m_InteractionService = services.GetRequiredService<InteractionService>();
-
-                client.Log += OnLog;
-                client.Ready += OnReady;
+                
+                m_Client.Log += OnLog;
+                m_Client.Ready += OnReady;
                 m_InteractionService.Log += OnLog;
 
                 await commandHandler.InitializeAsync();
 
-                await client.LoginAsync(TokenType.Bot, m_Config["token"]);
-                await client.StartAsync();
+                await m_Client.LoginAsync(TokenType.Bot, m_Config["token"]);
+                await m_Client.StartAsync();
 
                 await Task.Delay(Timeout.Infinite);
             }
@@ -39,6 +39,11 @@ namespace Sparrows.Bot {
 
         private Task OnLog(LogMessage msg) {
             Console.WriteLine("[ Discord ] " + msg.ToString());
+
+            if(m_LogChannel != null) {
+                m_LogChannel.SendMessageAsync(msg.ToString());
+            }
+
             return Task.CompletedTask;
         }
 
@@ -52,6 +57,10 @@ namespace Sparrows.Bot {
             #else
                 await m_InteractionService.RegisterCommandsGloballyAsync();
             #endif
+
+            ulong logChannelId = ulong.Parse(m_Config.GetRequiredSection("log_channel").Value);
+            m_LogChannel = m_Client.GetChannel(logChannelId) as IMessageChannel;
+            
         }
 
         private ServiceProvider ConfigureServices() {
@@ -61,10 +70,14 @@ namespace Sparrows.Bot {
             .AddSingleton<InteractionService>()
             .AddSingleton<CommandHandlerService>()
             .AddSingleton<IUserService, MemStoreUserService>()
+            .AddSingleton<IOrderService, MemStoreOrderService>()
             .BuildServiceProvider();
         }
 
         private readonly IConfiguration m_Config;
         private InteractionService? m_InteractionService;
+        private DiscordSocketClient? m_Client;
+        private IMessageChannel? m_LogChannel;
+        
     }
 }
