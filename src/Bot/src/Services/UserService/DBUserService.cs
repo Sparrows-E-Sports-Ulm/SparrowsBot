@@ -18,12 +18,13 @@ namespace Sparrows.Bot.Services {
             await m_Collection.InsertOneAsync(user);
         }
 
-        public async Task Delete(ulong id) {
-            await m_Collection.DeleteOneAsync(filter => filter.DiscordId == id);
+        public async Task<bool> Delete(ulong id) {
+            DeleteResult result = await m_Collection.DeleteOneAsync(filter => filter.DiscordId == id);
+            return result.DeletedCount > 0;
         }
 
-        public async Task Delete(User user) {
-            await Delete(user.DiscordId);
+        public async Task<bool> Delete(User user) {
+            return await Delete(user.DiscordId);
         }
 
         public async Task<bool> Exists(User user) {

@@ -22,13 +22,13 @@ namespace Sparrows.Bot.Services {
         /// Deletes a user from the service with the matiching discord id 
         /// </summary>
         /// <param name="id">The discord id of the user to be deleted</param>
-        Task Delete(ulong id);
+        Task<bool> Delete(ulong id);
 
         /// <summary>
         /// Deletes a user from the service
         /// </summary>
         /// <param name="user">The user to delete</param>
-        Task Delete(User user);
+        Task<bool> Delete(User user);
 
         /// <summary>
         /// Check if a certain user exists in the service

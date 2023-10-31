@@ -14,14 +14,14 @@ namespace Sparrows.Bot.Services {
             return Task.CompletedTask;
         }
 
-        public Task Delete(ulong id) {
+        public Task<bool> Delete(ulong id) {
             m_Users.Remove(id);
-            return Task.CompletedTask;
+            return Task.FromResult(true);
         }
 
-        public Task Delete(User user) {
+        public Task<bool> Delete(User user) {
             Delete(user.DiscordId);
-            return Task.CompletedTask;
+            return Task.FromResult(true);
         }
 
         public Task<User> Get(ulong id) {

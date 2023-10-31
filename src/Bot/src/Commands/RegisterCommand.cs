@@ -27,6 +27,19 @@ namespace Sparrows.Bot.Commands {
             await RespondAsync("Success! You are now registered!");
         }
 
+
+        [SlashCommand("unregister", "Deletes all your data from the bot")]
+        public async Task Unregister() {
+            bool isDeleted = await m_UserService.Delete(Context.User.Id);
+
+            if(!isDeleted) {
+                await RespondAsync("You are not registered");
+                return;
+            }
+
+            await RespondAsync("Success! You have been unregistered!");
+        }
+
         private IUserService m_UserService;
     }
 }
