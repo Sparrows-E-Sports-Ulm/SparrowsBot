@@ -1,35 +1,88 @@
 ﻿using Discord;
+using Discord.Interactions;
 using Discord.WebSocket;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using MongoDB.Driver;
+using Sparrows.Bot.Services;
 
 namespace Sparrows.Bot {
     class Program {
+        public Program() {
+            m_Config = new ConfigurationBuilder()
+            .SetBasePath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "config"))
+            .AddJsonFile("appsettings.json", optional: false)
+        #if DEBUG
+            .AddJsonFile("appsettings.dev.json", optional: true)
+        #endif
+            .Build();
+
+            m_DbClient = new MongoClient("mongodb://localhost:27017");
+        }
+
         public static Task Main(string[] args) => new Program().MainAsync();
 
         public async Task MainAsync() {
-            var configBuilder = new ConfigurationBuilder()
-            .SetBasePath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "config"))
-            .AddJsonFile("appsettings.json", optional: false)
-            .AddJsonFile("appsettings.dev.json", optional: true);
-            IConfigurationRoot config = configBuilder.Build();
-            
-            m_Client = new DiscordSocketClient();
-            m_Client.Log += Log;
+            using(var services = ConfigureServices()) {
+                m_Client = services.GetRequiredService<DiscordSocketClient>();
+                var commandHandler = services.GetRequiredService<CommandHandlerService>();
+                m_InteractionService = services.GetRequiredService<InteractionService>();
+                
+                m_Client.Log += OnLog;
+                m_Client.Ready += OnReady;
+                m_InteractionService.Log += OnLog;
 
-            var token = config.GetSection("token").Value;
+                await commandHandler.InitializeAsync();
 
-            await m_Client.LoginAsync(TokenType.Bot, token);
-            await m_Client.StartAsync();
+                await m_Client.LoginAsync(TokenType.Bot, m_Config["token"]);
+                await m_Client.StartAsync();
 
-            await Task.Delay(-1);
+                await Task.Delay(Timeout.Infinite);
+            }
         }
 
-        private Task Log(LogMessage msg) {
-            Console.WriteLine(msg.ToString());
+        private Task OnLog(LogMessage msg) {
+            Console.WriteLine("[ Discord ] " + msg.ToString());
+
+            if(m_LogChannel != null) {
+                m_LogChannel.SendMessageAsync(msg.ToString());
+            }
+
             return Task.CompletedTask;
         }
 
+        private async Task OnReady() {
+            if(m_InteractionService == null) {
+                throw new Exception("Interactions Service needs to be initilized");
+            }
 
-        private DiscordSocketClient m_Client;
+            #if DEBUG
+                await m_InteractionService.RegisterCommandsToGuildAsync(ulong.Parse(m_Config["test_guild_id"]));
+            #else
+                await m_InteractionService.RegisterCommandsGloballyAsync();
+            #endif
+
+            ulong logChannelId = ulong.Parse(m_Config.GetRequiredSection("log_channel").Value);
+            m_LogChannel = m_Client.GetChannel(logChannelId) as IMessageChannel;   
+        }
+
+        private ServiceProvider ConfigureServices() {
+            return new ServiceCollection()
+            .AddSingleton(m_Config)
+            .AddSingleton<DiscordSocketClient>()
+            .AddSingleton<InteractionService>()
+            .AddSingleton(m_DbClient)
+            .AddSingleton<CommandHandlerService>()
+            .AddSingleton<IUserService, DBUserService>()
+            .AddSingleton<IOrderService, DBOrderService>()
+            .BuildServiceProvider();
+        }
+
+        private readonly IConfiguration m_Config;
+        private InteractionService? m_InteractionService;
+        private DiscordSocketClient? m_Client;
+        private IMessageChannel? m_LogChannel;
+        private MongoClient m_DbClient;
+        
     }
 }
