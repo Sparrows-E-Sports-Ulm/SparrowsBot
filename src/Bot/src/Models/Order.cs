@@ -10,5 +10,6 @@ namespace Sparrows.Bot.Models {
         public required string DishNumber;
         public required string DishName;
         public required int Amount;
+        public required decimal ItemPrice;
     }
 }

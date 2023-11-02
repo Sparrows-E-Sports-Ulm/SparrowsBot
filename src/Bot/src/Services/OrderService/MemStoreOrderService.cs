@@ -39,13 +39,19 @@ namespace Sparrows.Bot.Services {
             return Task.FromResult(m_Orders[userId]);
         }
 
-        public Task RemoveOrder(ulong userId, int index) {
+        public Task<bool> RemoveOrder(ulong userId, int index) {
             if(!m_Orders.ContainsKey(userId)) {
-                return Task.CompletedTask;
+                return Task.FromResult(false);
             }
 
+            index = index - 1;
+            if(index < 0 || index > m_Orders[userId].Count - 1) {
+                return Task.FromResult(false);
+            }
+
+
             m_Orders[userId].RemoveAt(index);
-            return Task.CompletedTask;
+            return Task.FromResult(true);
         }
 
         public Task<List<Order>> GetAllOrders() {

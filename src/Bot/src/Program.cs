@@ -12,7 +12,9 @@ namespace Sparrows.Bot {
             m_Config = new ConfigurationBuilder()
             .SetBasePath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "config"))
             .AddJsonFile("appsettings.json", optional: false)
+        #if DEBUG
             .AddJsonFile("appsettings.dev.json", optional: true)
+        #endif
             .Build();
 
             m_DbClient = new MongoClient("mongodb://localhost:27017");

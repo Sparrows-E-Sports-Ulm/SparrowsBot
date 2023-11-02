@@ -1,9 +1,7 @@
 using System.Collections.Immutable;
-using Amazon.Runtime.Endpoints;
 using MongoDB.Bson;
 using MongoDB.Driver;
 using Sparrows.Bot.Models;
-using ZstdSharp.Unsafe;
 
 namespace Sparrows.Bot.Services {
     public class DBOrderService : IOrderService {
@@ -56,9 +54,17 @@ namespace Sparrows.Bot.Services {
             await RemoveOrder(user.DiscordId, index);
         }
 
-        public async Task RemoveOrder(ulong userId, int index) {
-            await UpdateOrderCount(userId, -1);
-            await m_Orders.DeleteOneAsync(_ => _.DiscordUserId == userId && _.Index == index);
+        public async Task<bool> RemoveOrder(ulong userId, int index) {
+            var orders = await GetOrders(userId);
+
+            index = index - 1;
+            if(index < 0 || index > orders.Count - 1) {
+                return false;
+            }
+
+            await m_Orders.DeleteOneAsync(_ => _.Id == orders[index].Id);
+
+            return true;
         }
 
         public Task LockOrdering() {

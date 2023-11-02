@@ -8,7 +8,7 @@ namespace Sparrows.Bot.Services {
 
         public Task RemoveOrder(User user, int index);
 
-        public Task RemoveOrder(ulong userId, int index);
+        public Task<bool> RemoveOrder(ulong userId, int index);
 
         public Task<List<Order>> GetOrders(ulong userId);
         
