@@ -72,7 +72,7 @@ namespace Sparrows.Bot {
             .AddSingleton(m_DbClient)
             .AddSingleton<CommandHandlerService>()
             .AddSingleton<IUserService, DBUserService>()
-            .AddSingleton<IOrderService, MemStoreOrderService>()
+            .AddSingleton<IOrderService, DBOrderService>()
             .BuildServiceProvider();
         }
 

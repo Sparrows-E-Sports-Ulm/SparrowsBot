@@ -27,7 +27,8 @@ namespace Sparrows.Bot.Commands {
                 return;
             }
 
-            m_OrderService.UnlockOrdering();
+            await m_OrderService.DeleteAllOrders();
+            await m_OrderService.UnlockOrdering();
 
             if(!url.StartsWith("http")) {
                 url = "https://" + url;
@@ -56,22 +57,18 @@ namespace Sparrows.Bot.Commands {
 
             await RespondAsync("Processing Orders... You will receive a DM shortly.");
 
-            m_OrderService.LockOrdering();
+            await m_OrderService.LockOrdering();
 
-            var orders = m_OrderService.GetAllOrders();
+            var orders = await m_OrderService.GetAllOrders();
             
             var fileStream = new MemoryStream();
             var writer = new StreamWriter(fileStream);
 
             writer.WriteLine("Discord User;Vorname;Nachname;Anzahl;Nummer;Gericht;PayPal");
 
-            foreach(var userid in orders.Keys) {
-                User user = await m_UserService.Get(userid);
-                var basket = orders[userid];
-
-                foreach(var order in basket) {
-                    writer.WriteLine($"{user.DiscordName};{user.FirstName};{user.LastName};{order.Amount};{order.DishNumber};{order.DishName};{user.PayPal}");
-                }
+            foreach(var order in orders) {
+                User user = await m_UserService.Get(order.DiscordUserId);
+                writer.WriteLine($"{user.DiscordName};{user.FirstName};{user.LastName};{order.Amount};{order.DishNumber};{order.DishName};{user.PayPal}");
             }
 
             writer.Flush();
@@ -86,7 +83,7 @@ namespace Sparrows.Bot.Commands {
 
         [SlashCommand("add", "Add a dish to your order")]
         public async Task Add(int amount, string dish_number, string dish_name) {
-            if(m_OrderService.IsOrderingLocked()) {
+            if(await m_OrderService.IsOrderingLocked()) {
                 await RespondAsync("Hi, we are currently not ordering any food. Please wait until the next announcement to order food.");
                 return;
             }
@@ -97,7 +94,7 @@ namespace Sparrows.Bot.Commands {
                 return; 
             }
 
-            m_OrderService.AddOrder(Context.User.Id, new Order {
+            await m_OrderService.AddOrder(Context.User.Id, new Order {
                 DiscordUserId = Context.User.Id,
                 DishNumber = dish_number,
                 DishName = dish_name,
@@ -109,14 +106,14 @@ namespace Sparrows.Bot.Commands {
 
         [SlashCommand("remove", "Remove a dish from your order")]
         public async Task Remove(int number) {
-            if(m_OrderService.IsOrderingLocked()) {
+            if(await m_OrderService.IsOrderingLocked()) {
                 await RespondAsync("Hi, we are currently not ordering any food. Please wait until the next announcement to order food.");
                 return;
             }
 
             int index = number - 1;
 
-            var orders = m_OrderService.GetOrders(Context.User.Id);
+            var orders = await m_OrderService.GetOrders(Context.User.Id);
 
             if(index < 0 || index > (orders.Count - 1)) {
                 await RespondAsync("Invalid Index");
@@ -124,19 +121,19 @@ namespace Sparrows.Bot.Commands {
             }
 
             Order order = orders[index];
-            m_OrderService.RemoveOrder(Context.User.Id, index);   
+            await m_OrderService.RemoveOrder(Context.User.Id, index);   
 
             await RespondAsync($"Your Order {order.Amount}x {order.DishName} ({order.DishNumber}) has been removed!");
         }
 
         [SlashCommand("list", "List your current orders")]
         public async Task List() {
-            if(m_OrderService.IsOrderingLocked()) {
+            if(await m_OrderService.IsOrderingLocked()) {
                 await RespondAsync("Hi, we are currently not ordering any food. Please wait until the next announcement to order food.");
                 return;
             }
             
-            var orders = m_OrderService.GetOrders(Context.User.Id);
+            var orders = await m_OrderService.GetOrders(Context.User.Id);
 
             if(orders.Count == 0) {
                 await RespondAsync("You don't have any orders currently");

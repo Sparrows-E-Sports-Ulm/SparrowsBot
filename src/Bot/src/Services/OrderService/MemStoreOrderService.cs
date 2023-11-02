@@ -7,56 +7,74 @@ namespace Sparrows.Bot.Services {
             m_IsOrderingLocked = true;
         }
 
-        public void AddOrder(User user, Order order) {
+        public Task AddOrder(User user, Order order) {
             AddOrder(user.DiscordId, order);
+            return Task.CompletedTask;
         }
 
-        public List<Order> GetOrders(User user) {
+        public Task<List<Order>> GetOrders(User user) {
             return GetOrders(user.DiscordId);
         }
 
-        public void RemoveOrder(User user, int index) {
+        public Task RemoveOrder(User user, int index) {
             RemoveOrder(user.DiscordId, index);
+            return Task.CompletedTask;
         }
 
-        public void AddOrder(ulong userId, Order order) {
+        public Task AddOrder(ulong userId, Order order) {
             if(!m_Orders.ContainsKey(userId)) {
                 m_Orders.Add(userId, new List<Order>());
             }
 
             m_Orders[userId].Add(order);
+
+            return Task.CompletedTask;
         }
 
-        public List<Order> GetOrders(ulong userId) {
+        public Task<List<Order>> GetOrders(ulong userId) {
             if(!m_Orders.ContainsKey(userId)) {
-                return new List<Order>();
+                return Task.FromResult(new List<Order>());
             }
 
-            return m_Orders[userId];
+            return Task.FromResult(m_Orders[userId]);
         }
 
-        public void RemoveOrder(ulong userId, int index) {
+        public Task RemoveOrder(ulong userId, int index) {
             if(!m_Orders.ContainsKey(userId)) {
-                return;
+                return Task.CompletedTask;
             }
 
             m_Orders[userId].RemoveAt(index);
+            return Task.CompletedTask;
         }
 
-        public Dictionary<ulong, List<Order>> GetAllOrders() {
-            return m_Orders;
+        public Task<List<Order>> GetAllOrders() {
+            List<Order> orders = new List<Order>();
+            
+            foreach(var oder in m_Orders.Values) {
+                orders.AddRange(oder);
+            }
+
+            return Task.FromResult(orders);
         }
 
-        public bool IsOrderingLocked() {
-            return m_IsOrderingLocked;
+        public Task<bool> IsOrderingLocked() {
+            return Task.FromResult(m_IsOrderingLocked);
         }
 
-        public void LockOrdering() {
+        public Task LockOrdering() {
             m_IsOrderingLocked = true;
+            return Task.CompletedTask;
         }
 
-        public void UnlockOrdering() {
+        public Task UnlockOrdering() {
             m_IsOrderingLocked = false;
+            return Task.CompletedTask;
+        }
+
+        public Task DeleteAllOrders() {
+            m_Orders.Clear();
+            return Task.CompletedTask;
         }
 
         private Dictionary<ulong, List<Order>> m_Orders;

@@ -5,12 +5,6 @@ namespace Sparrows.Bot.Services {
     class DBUserService : IUserService {
         public DBUserService(MongoClient client) {
             IMongoDatabase db = client.GetDatabase("Users");
-
-            if(db.ListCollectionNames().ToList().Contains("Users")) {
-                Console.WriteLine("Initializing Users Collection");
-                db.CreateCollection("Users");
-            }
-
             m_Collection = db.GetCollection<User>("Users");
         }
 
